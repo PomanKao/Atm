@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "886356302072",
+    "firebase_url": "https://atm18-a8c9e.firebaseio.com",
+    "project_id": "atm18-a8c9e",
+    "storage_bucket": "atm18-a8c9e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:886356302072:android:0a19effe45b86ba2",
+        "android_client_info": {
+          "package_name": "com.poman.atm"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "886356302072-sun3ke8jo2jqbmg2pdnruobkutof7r82.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.poman.atm",
+            "certificate_hash": "e07be0d059bc3e2d00f8381a5a9dba9235595cdc"
+          }
+        },
+        {
+          "client_id": "886356302072-h1e9no28r46h7o4f2ak0fek8r5kkpsi1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaMzz3zUR-WDzcM0ZH4AH9NifVaYlsG2Y"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "886356302072-h1e9no28r46h7o4f2ak0fek8r5kkpsi1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
