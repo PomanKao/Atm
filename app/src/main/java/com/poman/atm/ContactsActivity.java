@@ -12,9 +12,13 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +29,7 @@ public class ContactsActivity extends AppCompatActivity {
 
     private static final int REQUEST_CONTACT = 80;
     private static final String TAG = ContactsActivity.class.getSimpleName();
+    private List<Contact> contacts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,11 +55,32 @@ public class ContactsActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_contact, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_upload) {
+            // upload to Firebase
+            Log.d(TAG, "onOptionsItemSelected: ");
+            String userid = getSharedPreferences("atm",MODE_PRIVATE)
+                    .getString("USERID", null);
+            FirebaseDatabase.getInstance().getReference("users")
+                    .child(userid)
+                    .child("contacts")
+                    .setValue(contacts);
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private void readContacts() {
     // read contacts
         Cursor cursor = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
                 null,null,null,null);
-        List<Contact> contacts = new ArrayList<>();
+        contacts = new ArrayList<>();
         while (cursor.moveToNext()) {
             int id = cursor.getInt(cursor.getColumnIndex(ContactsContract.Contacts._ID));
             String name = cursor.getString(
