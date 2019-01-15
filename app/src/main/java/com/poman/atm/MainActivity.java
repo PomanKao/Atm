@@ -122,6 +122,8 @@ public class MainActivity extends AppCompatActivity {
             case R.drawable.func_finance:
                 break;
             case R.drawable.func_contacts:
+                Intent contactsIntent = new Intent(this, ContactsActivity.class);
+                startActivity(contactsIntent);
                 break;
             case R.drawable.func_exit:
                 finish();
