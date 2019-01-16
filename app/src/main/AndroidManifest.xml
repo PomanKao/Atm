@@ -25,7 +25,12 @@
             </intent-filter>
         </activity>
         <activity android:name=".LoginActivity" />
-        <activity android:name=".ContactsActivity"></activity>
+        <activity android:name=".ContactsActivity" />
+        <activity
+            android:name=".FinanceActivity"
+            android:label="@string/title_activity_finace"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".AddActivity"></activity>
     </application>
 
 </manifest>
