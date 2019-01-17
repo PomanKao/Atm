@@ -1,7 +1,10 @@
 package com.poman.atm;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
@@ -36,6 +39,28 @@ public class LoginActivity extends AppCompatActivity {
     private  EditText edUserid;
     private  EditText edPasswd;
     private CheckBox cbRemUserid;
+    private Intent testService;
+
+    BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive: Test " + intent.getAction());
+        }
+    };
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        IntentFilter filter = new IntentFilter(TestService.ACTION_TEST_DONE);
+        registerReceiver(receiver,filter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+//        stopService(testService);
+        unregisterReceiver(receiver);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,8 +71,14 @@ public class LoginActivity extends AppCompatActivity {
         FragmentTransaction fragmentTransaction = manager.beginTransaction();
         fragmentTransaction.add(R.id.container_news, NewsFragment.getInstance());
         fragmentTransaction.commit();
-
-
+        // Service
+        testService = new Intent(this,TestService.class);
+        testService.putExtra("NAME","T1");
+        startService(testService);
+        testService.putExtra("NAME","T2");
+        startService(testService);
+        testService.putExtra("NAME","T3");
+        startService(testService);
 //        camera();
 //        settingsTest();
         findViews();
