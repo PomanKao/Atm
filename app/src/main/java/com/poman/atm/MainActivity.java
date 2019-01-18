@@ -116,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "itemClicked: " + fun.getName());
         switch (fun.getIcon()) {
             case R.drawable.func_transaction:
+                startActivity(new Intent(this, TransActivity.class));
                 break;
             case R.drawable.func_balance:
                 break;

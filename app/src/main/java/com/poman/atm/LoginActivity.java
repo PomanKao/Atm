@@ -1,11 +1,17 @@
 package com.poman.atm;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -15,11 +21,16 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -28,27 +39,85 @@ public class LoginActivity extends AppCompatActivity {
     private  EditText edUserid;
     private  EditText edPasswd;
     private CheckBox cbRemUserid;
+    private Intent testService;
+
+    BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive: Test " + intent.getAction());
+        }
+    };
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        IntentFilter filter = new IntentFilter(TestService.ACTION_TEST_DONE);
+        registerReceiver(receiver,filter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+//        stopService(testService);
+        unregisterReceiver(receiver);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        // Fragment
+        FragmentManager manager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = manager.beginTransaction();
+        fragmentTransaction.add(R.id.container_news, NewsFragment.getInstance());
+        fragmentTransaction.commit();
+        // Service
+        testService = new Intent(this,TestService.class);
+        testService.putExtra("NAME","T1");
+        startService(testService);
+        testService.putExtra("NAME","T2");
+        startService(testService);
+        testService.putExtra("NAME","T3");
+        startService(testService);
+//        camera();
+//        settingsTest();
+        findViews();
+        new TestTask().execute("http://tw.yahoo.com");
+    }
 
-        int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-        if (permission == PackageManager.PERMISSION_GRANTED) {
-//            takePhoto();
-        } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},
-                    REQUEST_CODE_CAMERA);
+    public class TestTask extends AsyncTask<String, Void, Integer> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Log.d(TAG, "onPreExecute: ");
+            Toast.makeText(LoginActivity.this, "onPreExecute",Toast.LENGTH_LONG).show();
         }
-        getSharedPreferences("atm",MODE_PRIVATE)
-                .edit()
-                .putInt("LEVEL", 3)
-                .putString("NAME", "Poman")
-                .apply();
-        int level = getSharedPreferences("atm",MODE_PRIVATE)
-                .getInt("LEVEL",0);
-        Log.d(TAG, "onCreate: " + level);
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            Log.d(TAG, "onPostExecute: ");
+            Toast.makeText(LoginActivity.this,"onPostExecute" + integer,Toast.LENGTH_LONG).show();
+        }
+
+        @Override
+        protected Integer doInBackground(String... strings) {
+            int data = 0;
+            try {
+                URL url = new URL(strings[0]);
+                data = url.openStream().read();
+                Log.d(TAG, "TestTask: " + data);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return data;
+        }
+    }
+
+    private void findViews() {
         edUserid = findViewById(R.id.userid);
         edPasswd = findViewById(R.id.passwd);
         cbRemUserid = findViewById(R.id.cb_rem_userid);
@@ -67,6 +136,27 @@ public class LoginActivity extends AppCompatActivity {
         String userid = getSharedPreferences("atm",MODE_PRIVATE)
                 .getString("USERID", "");
         edUserid.setText(userid);
+    }
+
+    private void settingsTest() {
+        getSharedPreferences("atm",MODE_PRIVATE)
+                .edit()
+                .putInt("LEVEL", 3)
+                .putString("NAME", "Poman")
+                .apply();
+        int level = getSharedPreferences("atm",MODE_PRIVATE)
+                .getInt("LEVEL",0);
+        Log.d(TAG, "onCreate: " + level);
+    }
+
+    private void camera() {
+        int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+        if (permission == PackageManager.PERMISSION_GRANTED) {
+//            takePhoto();
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},
+                    REQUEST_CODE_CAMERA);
+        }
     }
 
     private void takePhoto() {
