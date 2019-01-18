@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     boolean logon = false;
     private List<Function> functions;
-    //    String[] functions = null;
+    //    String[] functions = null; // Test
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
