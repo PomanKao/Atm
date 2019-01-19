@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -40,6 +42,7 @@ public class LoginActivity extends AppCompatActivity {
     private  EditText edPasswd;
     private CheckBox cbRemUserid;
     private Intent testService;
+    private AlertDialog.Builder alert;
 
     BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -72,6 +75,18 @@ public class LoginActivity extends AppCompatActivity {
         fragmentTransaction.add(R.id.container_news, NewsFragment.getInstance());
         fragmentTransaction.commit();
         // Service
+//        serviceTest();
+        // Check the permission of camera
+//        camera();
+        // Access the SharedPreference
+//        settingsTest();
+        findViews();
+        // Test Async Task
+//        new TestTask().execute("http://tw.yahoo.com");
+        alert = new AlertDialog.Builder(this);
+    }
+
+    private void serviceTest() {
         testService = new Intent(this,TestService.class);
         testService.putExtra("NAME","T1");
         startService(testService);
@@ -79,10 +94,6 @@ public class LoginActivity extends AppCompatActivity {
         startService(testService);
         testService.putExtra("NAME","T3");
         startService(testService);
-//        camera();
-//        settingsTest();
-        findViews();
-        new TestTask().execute("http://tw.yahoo.com");
     }
 
     public class TestTask extends AsyncTask<String, Void, Integer> {
@@ -177,11 +188,23 @@ public class LoginActivity extends AppCompatActivity {
     public void login(View view) {
         final String userid = edUserid.getText().toString();
         final String passwd = edPasswd.getText().toString();
+
+        if (!checkNetwork()) {
+            showNetworkAlert();
+            return;
+        }
+
+        if (userid.equals("") || passwd.equals("")) {
+            showAlert();
+            return;
+        }
+
         FirebaseDatabase.getInstance().getReference("users").child(userid).child("password")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         String pw = (String) dataSnapshot.getValue();
+                        Log.d(TAG, "onDataChange: "+pw);
                         if (pw.equals(passwd)) {
                             boolean remember = getSharedPreferences("atm",MODE_PRIVATE)
                                     .getBoolean("REMEMBER_USERID", false);
@@ -195,27 +218,39 @@ public class LoginActivity extends AppCompatActivity {
                             setResult(RESULT_OK);
                             finish();
                         } else {
-                            new AlertDialog.Builder(LoginActivity.this)
-                                    .setTitle("登入失敗")
-                                    .setMessage("請檢察帳號密碼")
-                                    .setPositiveButton("OK",null)
-                                    .show();
+                            showAlert();
                         }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                        Log.d(TAG, "onCancelled: ");
                     }
                 });
-       /* if ("jack".equals(userid) && "1234".equals(passwd)) {
-            setResult(RESULT_OK);
-            finish();
-        }*/
+    }
+
+    private boolean checkNetwork() {
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return (networkInfo != null) && networkInfo.isConnected();
+    }
+
+    private void showNetworkAlert() {
+        alert.setTitle("網路異常")
+                .setMessage("請檢查網路連線是否正常")
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    private void showAlert() {
+        alert.setTitle("登入失敗")
+            .setMessage("請檢查帳號密碼")
+            .setPositiveButton("OK",null)
+            .show();
     }
 
     public void quit(View vIew) {
-
+        finish();
     }
 
 }

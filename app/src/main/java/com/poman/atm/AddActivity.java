@@ -39,6 +39,6 @@ public class AddActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "新增失敗", Toast.LENGTH_LONG).show();
         }
-
+        finish();
     }
 }
