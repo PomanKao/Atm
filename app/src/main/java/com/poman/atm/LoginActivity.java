@@ -96,6 +96,10 @@ public class LoginActivity extends AppCompatActivity {
         startService(testService);
     }
 
+    public void map(View view) {
+        startActivity(new Intent(this,MapsActivity.class));
+    }
+
     public class TestTask extends AsyncTask<String, Void, Integer> {
 
         @Override
