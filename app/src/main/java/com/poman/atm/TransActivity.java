@@ -23,9 +23,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -38,6 +41,12 @@ public class TransActivity extends AppCompatActivity {
     private static final String TAG = TransActivity.class.getSimpleName();
     private List<Transaction> transations;
     private RecyclerView recyclerView;
+    private int tryServerTimes;
+    private String fakeJson = "[{\"account\":\"jack\",\"date\":\"20160501\",\"amount\":1500,\"type\":0}" +
+            ",{\"account\":\"jack\",\"date\":\"20160501\",\"amount\":6000,\"type\":0}" +
+            ",{\"account\":\"jack\",\"date\":\"20160502\",\"amount\":3000,\"type\":1}" +
+            ",{\"account\":\"jack\",\"date\":\"20160501\",\"amount\":20000,\"type\":0}" +
+            ",{\"account\":\"jack\",\"date\":\"20160501\",\"amount\":1000,\"type\":1}]";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,14 +58,32 @@ public class TransActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
 //        new TransTask().execute("http://atm201605.appspot.com/h");
-        OkHttpClient client = new OkHttpClient();
+        getServerDate();
+    }
+
+    private void getServerDate() {
+        tryServerTimes = 0;
+        final OkHttpClient client = new OkHttpClient();
+        client.newBuilder()
+                .connectTimeout(3, TimeUnit.SECONDS)
+                .readTimeout(7, TimeUnit.SECONDS)
+                .build();
         Request request = new Request.Builder()
                 .url("http://atm201605.appspot.com/h")
                 .build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-
+                if (e.getCause().equals(SocketTimeoutException.class)) {
+                    e.printStackTrace();
+                }
+                parseGSON(fakeJson);
+                /*if (e.getCause().equals(SocketTimeoutException.class) && tryServerTimes < 3) {
+                    tryServerTimes++;
+                    client.newCall(call.request()).enqueue(this);
+                } else {
+                    e.printStackTrace();
+                }*/
             }
 
             @Override

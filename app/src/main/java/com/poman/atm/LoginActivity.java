@@ -20,19 +20,24 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -50,6 +55,9 @@ public class LoginActivity extends AppCompatActivity {
             Log.d(TAG, "onReceive: Test " + intent.getAction());
         }
     };
+    private ProgressBar progressBar;
+    private Button btnLogin;
+    private Button btnQuit;
 
     @Override
     protected void onStart() {
@@ -83,7 +91,6 @@ public class LoginActivity extends AppCompatActivity {
         findViews();
         // Test Async Task
 //        new TestTask().execute("http://tw.yahoo.com");
-        alert = new AlertDialog.Builder(this);
     }
 
     private void serviceTest() {
@@ -151,6 +158,12 @@ public class LoginActivity extends AppCompatActivity {
         String userid = getSharedPreferences("atm",MODE_PRIVATE)
                 .getString("USERID", "");
         edUserid.setText(userid);
+
+        alert = new AlertDialog.Builder(this);
+
+        progressBar = findViewById(R.id.probar_login);
+        btnLogin = findViewById(R.id.btn_login);
+        btnQuit = findViewById(R.id.btn_quit);
     }
 
     private void settingsTest() {
@@ -193,44 +206,67 @@ public class LoginActivity extends AppCompatActivity {
         final String userid = edUserid.getText().toString();
         final String passwd = edPasswd.getText().toString();
 
-        if (!checkNetwork()) {
-            showNetworkAlert();
-            return;
-        }
-
         if (userid.equals("") || passwd.equals("")) {
             showAlert();
             return;
         }
 
-        FirebaseDatabase.getInstance().getReference("users").child(userid).child("password")
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        String pw = (String) dataSnapshot.getValue();
-                        Log.d(TAG, "onDataChange: "+pw);
-                        if (pw.equals(passwd)) {
-                            boolean remember = getSharedPreferences("atm",MODE_PRIVATE)
-                                    .getBoolean("REMEMBER_USERID", false);
-                            if (remember) {
-                                // save userid
-                                getSharedPreferences("atm", MODE_PRIVATE)
-                                        .edit()
-                                        .putString("USERID", userid)
-                                        .apply();
-                            }
-                            setResult(RESULT_OK);
-                            finish();
-                        } else {
-                            showAlert();
-                        }
-                    }
+        if (!checkNetwork()) {
+            showNetworkAlert();
+            return;
+        }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                        Log.d(TAG, "onCancelled: ");
+        final boolean[] gotResult = new boolean[1];
+        gotResult[0] = false;
+        setUIEnable(false);
+        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference("users")
+                .child(userid).child("password");
+        final ValueEventListener listener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                gotResult[0] = true;
+                setUIEnable(true);
+                String pw = (String) dataSnapshot.getValue();
+                if (pw.equals(passwd)) {
+                    boolean remember = getSharedPreferences("atm",MODE_PRIVATE)
+                            .getBoolean("REMEMBER_USERID", false);
+                    if (remember) {
+                        // save userid
+                        getSharedPreferences("atm", MODE_PRIVATE)
+                                .edit()
+                                .putString("USERID", userid)
+                                .apply();
                     }
-                });
+                    setResult(RESULT_OK);
+                    finish();
+                } else {
+                    showAlert();
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                gotResult[0] = true;
+                setUIEnable(true);
+                Log.d(TAG, "onCancelled: ");
+            }
+        };
+        reference.addListenerForSingleValueEvent(listener);
+        // set time out
+        final Timer timer = new Timer();
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                timer.cancel();
+                if (!gotResult[0]) {// Timeout
+                    reference.removeEventListener(listener);
+                    showNetworkAlert();
+                    // For demo
+                    setResult(RESULT_OK);
+                    finish();
+                }
+            }
+        };
+        timer.schedule(timerTask, 3000L);
     }
 
     private boolean checkNetwork() {
@@ -244,6 +280,7 @@ public class LoginActivity extends AppCompatActivity {
                 .setMessage("請檢查網路連線是否正常")
                 .setPositiveButton("OK", null)
                 .show();
+        setUIEnable(true);
     }
 
     private void showAlert() {
@@ -251,6 +288,22 @@ public class LoginActivity extends AppCompatActivity {
             .setMessage("請檢查帳號密碼")
             .setPositiveButton("OK",null)
             .show();
+    }
+
+    private void setUIEnable(boolean isEnable) {
+        if (!isEnable) {
+            progressBar.setVisibility(View.VISIBLE);
+            edUserid.setEnabled(false);
+            edPasswd.setEnabled(false);
+            btnLogin.setEnabled(false);
+            btnQuit.setEnabled(false);
+        } else {
+            progressBar.setVisibility(View.GONE);
+            edUserid.setEnabled(true);
+            edPasswd.setEnabled(true);
+            btnLogin.setEnabled(true);
+            btnQuit.setEnabled(true);
+        }
     }
 
     public void quit(View vIew) {
